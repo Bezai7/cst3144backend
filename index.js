@@ -2,6 +2,8 @@ var express = require("express");
 var cors = require("cors");
 var bodyParser = require("body-parser");
 var morgan = require("morgan");
+var path = require("path");  // NEW
+var fs = require("fs");  // NEW
 var { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require('dotenv').config();
 
@@ -112,7 +114,6 @@ app.post('/order', async (req, res) => {
   }
 });
 
-// NEW - PUT /lessons route
 app.put('/lessons', async (req, res) => {
   var updates = req.body;
   if (!Array.isArray(updates)) {
@@ -146,6 +147,36 @@ app.put('/lessons', async (req, res) => {
     console.error('Error updating lessons:', err);
     res.status(500).json({ error: 'Failed to update lessons' });
   }
+});
+
+// NEW - Static file middleware
+app.get('/images/:filename', (req, res) => {
+  var imagesPath = path.join(__dirname, 'images');
+  var filename = req.params.filename;
+  var filePath = path.join(imagesPath, filename);
+  
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    if (err) {
+      res.status(404).json({ error: 'Image file not found' });
+    } else {
+      res.sendFile(filePath, (sendErr) => {
+        if (sendErr) {
+          res.status(404).json({ error: 'Image file not found' });
+        }
+      });
+    }
+  });
+});
+
+// NEW - 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Resource not found" });
+});
+
+// NEW - Global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  res.status(500).json({ error: 'An error occurred' });
 });
 // END NEW
 
