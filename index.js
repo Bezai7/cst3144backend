@@ -45,7 +45,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// NEW - GET /lessons route
 app.get('/lessons', async (req, res) => {
   try {
     var lessons = await lessonsCollection.find({}).toArray();
@@ -57,7 +56,6 @@ app.get('/lessons', async (req, res) => {
   }
 });
 
-// NEW - GET /lessons/:id route
 app.get('/lessons/:id', async (req, res) => {
   try {
     var lesson = await lessonsCollection.findOne({_id: new ObjectId(req.params.id)});
@@ -68,6 +66,32 @@ app.get('/lessons/:id', async (req, res) => {
   } catch (err) {
     console.error('Error fetching lesson:', err);
     res.status(500).json({ error: 'Failed to fetch lesson' });
+  }
+});
+
+// NEW - GET /search route
+app.get('/search', async (req, res) => {
+  var query = req.query.query;
+  if (!query) {
+    return res.status(400).json({ error: 'Need query parameter' });
+  }
+  
+  try {
+    var regex = new RegExp(query, 'i');
+    var results = await lessonsCollection.find({
+      $or: [
+        { subject: { $regex: regex } },
+        { location: { $regex: regex } },
+        { price: { $regex: regex } },
+        { spaces: { $regex: regex } }
+      ]
+    }).toArray();
+    
+    console.log('Search results:', results.length);
+    res.json(results);
+  } catch (err) {
+    console.error('Error searching lessons:', err);
+    res.status(500).json({ error: 'Failed to search lessons' });
   }
 });
 // END NEW
