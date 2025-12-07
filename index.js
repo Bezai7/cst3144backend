@@ -2,8 +2,8 @@ var express = require("express");
 var cors = require("cors");
 var bodyParser = require("body-parser");
 var morgan = require("morgan");
-var path = require("path");  
-var fs = require("fs");  
+var path = require("path");
+var fs = require("fs");
 var { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require('dotenv').config();
 
@@ -42,11 +42,13 @@ app.use(bodyParser.json());
 app.use(morgan('dev'));
 app.set('json spaces', 3);
 
+// Logger middleware - outputs all requests to server console
 app.use((req, res, next) => {
   console.log("In comes a request to: " + req.url);
   next();
 });
 
+// GET /lessons - returns all lessons as JSON
 app.get('/lessons', async (req, res) => {
   try {
     var lessons = await lessonsCollection.find({}).toArray();
@@ -58,6 +60,7 @@ app.get('/lessons', async (req, res) => {
   }
 });
 
+// GET /lessons/:id - returns a single lesson
 app.get('/lessons/:id', async (req, res) => {
   try {
     var lesson = await lessonsCollection.findOne({_id: new ObjectId(req.params.id)});
@@ -71,6 +74,7 @@ app.get('/lessons/:id', async (req, res) => {
   }
 });
 
+// GET /search - backend search functionality
 app.get('/search', async (req, res) => {
   var query = req.query.query;
   if (!query) {
@@ -96,6 +100,7 @@ app.get('/search', async (req, res) => {
   }
 });
 
+// POST /order - saves a new order to the order collection
 app.post('/order', async (req, res) => {
   var order = req.body;
   console.log('New order:', order);
@@ -114,6 +119,7 @@ app.post('/order', async (req, res) => {
   }
 });
 
+// PUT /lessons - updates lessons (can update any attribute, used for updating spaces)
 app.put('/lessons', async (req, res) => {
   var updates = req.body;
   if (!Array.isArray(updates)) {
@@ -149,7 +155,7 @@ app.put('/lessons', async (req, res) => {
   }
 });
 
-
+// Static file middleware - returns lesson images or error message if file doesn't exist
 app.get('/images/:filename', (req, res) => {
   var imagesPath = path.join(__dirname, 'images');
   var filename = req.params.filename;
@@ -168,18 +174,18 @@ app.get('/images/:filename', (req, res) => {
   });
 });
 
-
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: "Resource not found" });
 });
 
-
+// Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err);
   res.status(500).json({ error: 'An error occurred' });
 });
 
-
 app.listen(port, () => {
   console.log("Server is running on port " + port);
 });
+
