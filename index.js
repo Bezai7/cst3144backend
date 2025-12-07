@@ -94,7 +94,6 @@ app.get('/search', async (req, res) => {
   }
 });
 
-// NEW - POST /order route
 app.post('/order', async (req, res) => {
   var order = req.body;
   console.log('New order:', order);
@@ -110,6 +109,42 @@ app.post('/order', async (req, res) => {
   } catch (err) {
     console.error('Error creating order:', err);
     res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+// NEW - PUT /lessons route
+app.put('/lessons', async (req, res) => {
+  var updates = req.body;
+  if (!Array.isArray(updates)) {
+    return res.status(400).json({ error: 'Expected an array of updates' });
+  }
+  
+  try {
+    var operations = updates.map(update => {
+      var updateFields = {};
+      if (update.update) {
+        updateFields = update.update;
+      } else if (update.spaces !== undefined) {
+        updateFields = { spaces: update.spaces };
+      }
+      
+      return {
+        updateOne: {
+          filter: { _id: new ObjectId(update.id) },
+          update: { $set: updateFields }
+        }
+      };
+    });
+    
+    var result = await lessonsCollection.bulkWrite(operations);
+    console.log('Bulk update result:', result.modifiedCount + ' lessons updated');
+    res.json({ 
+      message: 'Lessons updated successfully',
+      modifiedCount: result.modifiedCount 
+    });
+  } catch (err) {
+    console.error('Error updating lessons:', err);
+    res.status(500).json({ error: 'Failed to update lessons' });
   }
 });
 // END NEW
