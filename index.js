@@ -69,7 +69,6 @@ app.get('/lessons/:id', async (req, res) => {
   }
 });
 
-// NEW - GET /search route
 app.get('/search', async (req, res) => {
   var query = req.query.query;
   if (!query) {
@@ -92,6 +91,25 @@ app.get('/search', async (req, res) => {
   } catch (err) {
     console.error('Error searching lessons:', err);
     res.status(500).json({ error: 'Failed to search lessons' });
+  }
+});
+
+// NEW - POST /order route
+app.post('/order', async (req, res) => {
+  var order = req.body;
+  console.log('New order:', order);
+  
+  try {
+    var result = await ordersCollection.insertOne(order);
+    if (result.insertedId) {
+      var newOrder = await ordersCollection.findOne({ _id: result.insertedId });
+      res.status(201).json(newOrder);
+    } else {
+      res.status(500).json({ error: 'Failed to create order' });
+    }
+  } catch (err) {
+    console.error('Error creating order:', err);
+    res.status(500).json({ error: 'Failed to create order' });
   }
 });
 // END NEW
